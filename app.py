@@ -7,6 +7,12 @@ import math
 from collections import Counter
 from urllib.parse import urlparse
 
+"""
+Project: CyberSentinel Neural OS - Ultimate Edition (v3.0)
+Author: Shahad Ali Al-Mastour
+Description: Enterprise-Grade Forensic System with Actionable Intelligence
+"""
+
 # --- Page Config ---
 st.set_page_config(page_title="CyberSentinel Pro", page_icon="🛡️", layout="wide")
 
@@ -28,6 +34,7 @@ def analyze_url_deep(url):
     score = 0
     findings = {}
     
+    # Entropy & Heuristics
     probs = [c / len(url) for c in Counter(url).values()]
     entropy = -sum(p * math.log2(p) for p in probs)
     if entropy > 4.2: 
@@ -47,6 +54,8 @@ def analyze_url_deep(url):
         findings["Phishing Keywords"] = "Associated with phishing/social engineering."
 
     status = "CRITICAL" if score >= 8 else "WARNING" if score >= 4 else "SECURE"
+    
+    # Actionable Intelligence
     recommendations = ["BLOCK domain" if "CRITICAL" in status else "Proceed with caution" if "WARNING" in status else "Safe to browse"]
     
     return status, score, findings, recommendations
@@ -76,8 +85,6 @@ def generate_forensic_report(data):
     buffer.seek(0)
     return buffer
 
-
-
 # --- UI Interface ---
 if 'history' not in st.session_state: st.session_state.history = []
 
@@ -101,27 +108,13 @@ with col1:
         else: st.warning("Please enter a valid URL.")
 
 with col2:
-    if st.button("🗑️ Clear System History"):
+    if st.button("🗑️ Clear System  History"):
         st.session_state.history = []
         st.rerun()
 
-# --- Deep Log Analysis Section ---
 if st.session_state.history:
-    st.markdown("---")
     st.subheader("Deep Log Analysis")
-    df = pd.DataFrame(st.session_state.history)
-    
-    # 1. الجدول الأساسي
-    st.dataframe(df.drop(columns=['Details']), use_container_width=True)
-    
-    # 2. لوحة العرض المتعمق (Drill-down)
-    selected_url = st.selectbox("Select URL to view forensic details:", df['URL'].tolist())
-    selected_data = next(item for item in st.session_state.history if item["URL"] == selected_url)
-    
-    st.markdown("### 🔍 Forensic Findings")
-    for key, value in selected_data['Details'].items():
-        st.info(f"*{key}*: {value}")
-        
+    st.dataframe(pd.DataFrame(st.session_state.history).drop(columns=['Details']), use_container_width=True)
     st.download_button("📥 Export Forensic Report", generate_forensic_report(st.session_state.history), "Detailed_Forensic_Report.pdf", "application/pdf")
 
 st.markdown("---")
