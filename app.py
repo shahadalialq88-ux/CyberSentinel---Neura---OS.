@@ -1,29 +1,4 @@
-[٤:٢٥ ص, ١١‏/٣‏/٢٠٢٦] Shahad 🌿: import streamlit as st
-import pandas as pd
-from reportlab.pdfgen import canvas
-import io
-import re
-
-"""
-Project: CyberSentinel
-Author: Shahad Ali Al-Mastour
-License: MIT
-Description: Enterprise-Grade Local Heuristic Security Engine
-"""
-
-# إعداد الصفحة
-st.set_page_config(page_title="CyberSentinel Pro", page_icon="🛡️", layout="wide")
-
-# الإقرار الرسمي (Disclaimer) - مختصر ورسمي
-if 'agreed' not in st.session_state:
-    st.session_state.agreed = False
-
-if not st.session_state.agreed:
-    st.title("🛡️ CyberSentinel | Disclaimer")
-    st.markdown("""
-    CyberSentinel is a security research tool provided 'as-is' for educational purposes only. By proceeding, you acknowledge that the developer (Shahad Ali Al-Mastour) assumes no liability for any misuse, 
-    secur…
-[٤:٢٦ ص, ١١‏/٣‏/٢٠٢٦] Shahad 🌿: import streamlit as st
+import streamlit as st
 import pandas as pd
 from reportlab.pdfgen import canvas
 import io
