@@ -108,7 +108,7 @@ with col1:
         else: st.warning("Please enter a valid URL.")
 
 with col2:
-    if st.button("Secure Wipe History"):
+    if st.button("🗑️ Clear System  History"):
         st.session_state.history = []
         st.rerun()
 
