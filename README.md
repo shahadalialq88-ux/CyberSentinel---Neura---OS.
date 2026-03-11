@@ -30,6 +30,9 @@ Security is a community effort, and I am always excited to connect with fellow r
  * Have an idea? I am open to feedback, suggestions, or contributions to CyberSentinel.
  * Let’s discuss security: Whether it’s threat intelligence, forensic research, or defensive coding, I’d love to hear from you.
 Feel free to reach out via my channels below:
+
 LinkedIn: [https://www.linkedin.com/in/shahad-ali-al-mastour-2942802ab?utm_source=share_via&utm_content=profile&utm_medium=member_ios]
+
 GitHub:[https://github.com/shahadalialq88-ux/CyberSentinel-AI]
+
 ©️ 2026 Shahad Ali Al-Mastour | Security Engineering Project
