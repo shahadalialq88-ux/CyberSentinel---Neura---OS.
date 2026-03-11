@@ -1,118 +1,123 @@
 import streamlit as st
 import pandas as pd
-import time
 from reportlab.pdfgen import canvas
 import io
 import re
 import math
 from collections import Counter
+from urllib.parse import urlparse
 
 """
-Project: CyberSentinel Neural OS (Enterprise Bilingual Edition)
+Project: CyberSentinel Neural OS - Professional Edition
 Author: Shahad Ali Al-Mastour
-Description: Advanced Local Forensic Security Engine
+Description: Enterprise-Grade Local Forensic Security Engine
 """
 
-# --- إعدادات الصفحة ---
-st.set_page_config(page_title="CyberSentinel Neural OS", page_icon="🛡️", layout="wide")
+# --- Page Configuration ---
+st.set_page_config(page_title="CyberSentinel Pro", page_icon="🛡️", layout="wide")
 
-# --- الإقرار القانوني ---
+# --- Security Disclaimer ---
 if 'agreed' not in st.session_state: st.session_state.agreed = False
-
 if not st.session_state.agreed:
-    st.title("🛡️ CyberSentinel | Disclaimer / إقرار")
-    st.markdown("""
-    CyberSentinel Neural OS is a security research tool provided 'as-is'. By proceeding, you acknowledge that the developer (Shahad Ali Al-Mastour) assumes no liability for any misuse.
-    استخدام هذه الأداة يعني موافقتك الكاملة على الشروط القانونية.
-    """)
-    if st.button("I Accept & Proceed / أوافق"):
+    st.title("🛡️ CyberSentinel | Disclaimer")
+    st.markdown("This tool is for security research purposes. By proceeding, you acknowledge full liability.")
+    if st.button("I Accept & Proceed"):
         st.session_state.agreed = True
         st.rerun()
     st.stop()
 
-# --- محرك التحليل الجنائي ---
+# --- Forensic Engine ---
 def analyze_url_deep(url):
-    # حارس البوابة (Input Validation)
+    # Input Validation
     if not re.match(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', url):
-        return "❌ INVALID / غير صالح", 0, "URL syntax error / خطأ في صيغة الرابط"
+        return "INVALID", 0, {"Syntax Error": "The URL format is invalid."}
     
-    time.sleep(1) 
     score = 0
-    reasons = []
+    findings = {}
     
-    # التحليل الرياضي للإنتروبي
+    # 1. Entropy Analysis (Mathematical randomness)
     probs = [c / len(url) for c in Counter(url).values()]
     entropy = -sum(p * math.log2(p) for p in probs)
-    if entropy > 4.2: score += 4; reasons.append(f"High Entropy ({entropy:.2f})")
+    if entropy > 4.2: 
+        score += 4
+        findings["High Entropy"] = f"Detected randomness score of {entropy:.2f}. High complexity often masks malicious intent."
     
-    if not url.startswith("https://"): score += 3; reasons.append("Insecure Protocol / بروتوكول غير آمن")
-    if re.search(r'\d{5,}', url): score += 3; reasons.append("Numeric Obfuscation / تمويه رقمي")
-    if any(k in url.lower() for k in ['login', 'verify', 'free', 'win', 'promo']): score += 5; reasons.append("Phishing Pattern / نمط تصيد")
-    if len(url) > 70: score += 2; reasons.append("Excessive Length / طول زائد")
+    # 2. Heuristic Analysis
+    if not url.startswith("https://"): 
+        score += 3
+        findings["Insecure Protocol"] = "The connection is not encrypted (HTTP), exposing data to man-in-the-middle attacks."
     
-    status = "🚨 CRITICAL / حرج" if score >= 8 else "⚠️ WARNING / تحذير" if score >= 4 else "✅ SECURE / آمن"
-    return status, score, " | ".join(reasons)
+    if re.search(r'\d{5,}', url): 
+        score += 3
+        findings["Numeric Obfuscation"] = "Suspicious long numeric sequence detected, often used to bypass filters."
+        
+    if any(k in url.lower() for k in ['login', 'verify', 'free', 'win']): 
+        score += 5
+        findings["Phishing Keywords"] = "Contains high-risk keywords associated with social engineering and phishing."
 
-# --- وحدة التقرير الجنائي ثنائي اللغة ---
+    status = "CRITICAL" if score >= 8 else "WARNING" if score >= 4 else "SECURE"
+    return status, score, findings
+
+# --- Forensic Report Generator ---
 def generate_forensic_report(data):
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer)
     p.setFont("Helvetica-Bold", 18)
-    p.drawString(50, 800, "CYBER SENTINEL | FORENSIC REPORT")
-    p.setFont("Helvetica", 12)
-    p.drawString(50, 780, f"Analyst: Shahad Ali Al-Mastour | {pd.Timestamp.now()}")
-    p.line(50, 770, 550, 770)
+    p.drawString(50, 820, "CYBER SENTINEL | FORENSIC ANALYSIS REPORT")
+    p.setFont("Helvetica", 10)
+    p.drawString(50, 800, f"Analyst: Shahad Ali Al-Mastour | {pd.Timestamp.now()}")
+    p.line(50, 790, 550, 790)
     
-    y = 740
+    y = 760
     for entry in data:
         p.setFont("Helvetica-Bold", 12)
-        p.drawString(50, y, f"Target URL: {entry['URL']}")
-        p.setFont("Helvetica", 12)
+        p.drawString(50, y, f"Target Domain: {urlparse(entry['URL']).netloc}")
+        p.setFont("Helvetica", 11)
         p.drawString(50, y-15, f"Risk Score: {entry['Risk']} | Status: {entry['Status']}")
-        p.drawString(50, y-30, f"Forensic Evidence (Details): {entry['Details']}")
-        y -= 60
+        
+        y -= 35
+        p.setFont("Helvetica-BoldOblique", 10)
+        p.drawString(50, y, "Forensic Evidence Breakdown:")
+        p.setFont("Helvetica", 10)
+        
+        for title, desc in entry['Details'].items():
+            y -= 15
+            p.drawString(70, y, f"- {title}: {desc}")
+        y -= 30
     
     p.save()
     buffer.seek(0)
     return buffer
 
-# --- واجهة النظام ---
+
+
+# --- UI Interface ---
 if 'history' not in st.session_state: st.session_state.history = []
 
-st.title("🌐 CyberSentinel | Neural OS")
-st.markdown("### System Status: Operational / حالة النظام: يعمل")
+st.title("🌐 CyberSentinel | Professional Forensic OS")
 
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    url_target = st.text_input("Injection Point (Target URL) / أدخل الرابط:")
-    if st.button("Initialize Deep Analysis / بدء الفحص العميق"):
+    url_target = st.text_input("Enter Target URL to Analyze:")
+    if st.button("Initiate Forensic Scan"):
         if url_target:
-            with st.spinner('Accessing Threat Intelligence...'):
-                status, score, details = analyze_url_deep(url_target)
-                st.session_state.history.append({"URL": url_target, "Status": status, "Risk": score, "Details": details})
-                st.success("Analysis Complete / اكتمل التحليل")
-        else: st.warning("Please provide a target URL / يرجى إدخال الرابط.")
+            status, score, findings = analyze_url_deep(url_target)
+            st.session_state.history.append({"URL": url_target, "Status": status, "Risk": score, "Details": findings})
+            st.success("Scan Completed.")
+        else: st.warning("Please enter a valid URL.")
 
 with col2:
-    if st.session_state.history:
-        st.write("### 📊 Security Insights")
-        if st.button("🗑️ Secure Wipe / مسح السجلات"):
-            st.session_state.history = []
-            st.rerun()
+    if st.button("Secure Wipe History"):
+        st.session_state.history = []
+        st.rerun()
 
-# --- السجلات والتقرير ---
 if st.session_state.history:
-    st.write("---")
-    st.subheader("Deep Log Analysis / السجلات الجنائية")
-    st.dataframe(pd.DataFrame(st.session_state.history), use_container_width=True)
-    
-    st.download_button(
-        label="📥 Export Forensic Artifact (PDF) / تصدير التقرير",
-        data=generate_forensic_report(st.session_state.history),
-        file_name="Forensic_Report.pdf",
-        mime="application/pdf"
-    )
+    st.subheader("Deep Log Analysis")
+    # Show data excluding the dictionary for cleaner table, keeping details for PDF
+    display_df = pd.DataFrame(st.session_state.history).drop(columns=['Details'])
+    st.dataframe(display_df, use_container_width=True)
+    st.download_button("📥 Export Comprehensive Forensic Report", generate_forensic_report(st.session_state.history), "Detailed_Forensic_Report.pdf", "application/pdf")
 
 st.markdown("---")
 st.caption("©️ 2026 CyberSentinel Neural OS | Shahad Ali Al-Mastour")
