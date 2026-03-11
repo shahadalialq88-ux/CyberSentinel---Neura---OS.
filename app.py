@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 """
 Project: CyberSentinel Neural OS - Professional Edition
 Author: Shahad Ali Al-Mastour
-Description: Enterprise-Grade Local Forensic Security Engine
+Description: Enterprise-Grade Local Forensic Security Engine with Domain Intelligence
 """
 
 # --- Page Configuration ---
@@ -35,7 +35,7 @@ def analyze_url_deep(url):
     score = 0
     findings = {}
     
-    # 1. Entropy Analysis (Mathematical randomness)
+    # 1. Entropy Analysis
     probs = [c / len(url) for c in Counter(url).values()]
     entropy = -sum(p * math.log2(p) for p in probs)
     if entropy > 4.2: 
@@ -70,8 +70,9 @@ def generate_forensic_report(data):
     
     y = 760
     for entry in data:
+        domain = urlparse(entry['URL']).netloc
         p.setFont("Helvetica-Bold", 12)
-        p.drawString(50, y, f"Target Domain: {urlparse(entry['URL']).netloc}")
+        p.drawString(50, y, f"Target Domain: {domain}")
         p.setFont("Helvetica", 11)
         p.drawString(50, y-15, f"Risk Score: {entry['Risk']} | Status: {entry['Status']}")
         
@@ -114,7 +115,6 @@ with col2:
 
 if st.session_state.history:
     st.subheader("Deep Log Analysis")
-    # Show data excluding the dictionary for cleaner table, keeping details for PDF
     display_df = pd.DataFrame(st.session_state.history).drop(columns=['Details'])
     st.dataframe(display_df, use_container_width=True)
     st.download_button("📥 Export Comprehensive Forensic Report", generate_forensic_report(st.session_state.history), "Detailed_Forensic_Report.pdf", "application/pdf")
