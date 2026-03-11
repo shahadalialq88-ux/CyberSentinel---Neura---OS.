@@ -4,14 +4,9 @@ from reportlab.pdfgen import canvas
 import io
 import re
 import os
+import math
 from collections import Counter
 from urllib.parse import urlparse
-
-"""
-Project: CyberSentinel Neural OS - Ultimate Edition (v4.0)
-Author: Shahad Ali Al-Mastour
-Description: Enterprise-Grade Forensic System with Persistent Logging & Weighted Intelligence
-"""
 
 # --- Page Configuration ---
 st.set_page_config(page_title="CyberSentinel Pro", page_icon="🛡️", layout="wide")
@@ -21,7 +16,6 @@ LOG_FILE = "forensic_logs.csv"
 
 # --- Security Disclaimer ---
 if 'agreed' not in st.session_state: st.session_state.agreed = False
-
 if not st.session_state.agreed:
     st.title("🛡️ CyberSentinel | Disclaimer")
     st.markdown("This tool is for security research. By proceeding, you accept all liability.")
@@ -32,7 +26,10 @@ if not st.session_state.agreed:
 
 # --- Forensic Engine ---
 def analyze_url_deep(url):
-    # Input Validation
+    # Basic Validation
+    if not url or len(url) < 5:
+        return "INVALID", 0, {"Error": "URL too short."}, ["N/A"]
+    
     if not re.match(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', url):
         return "INVALID", 0, {"Syntax Error": "Invalid URL format."}, ["N/A"]
     
@@ -40,19 +37,22 @@ def analyze_url_deep(url):
     phishing_score = 0
     findings = {}
     
-    # 1. Entropy Calculation
-    probs = [c / len(url) for c in Counter(url).values()]
-    entropy = -sum(p * math.log2(p) for p in probs)
+    # Entropy Calculation
+    counts = Counter(url)
+    total_len = len(url)
+    probs = [c / total_len for c in counts.values()]
+    entropy = -sum(p * math.log2(p) for p in probs if p > 0)
+    
     if entropy > 4.2: 
         entropy_score = 6
-        findings["High Entropy"] = f"Detected randomness score: {entropy:.2f}."
+        findings["High Entropy"] = f"Randomness score: {entropy:.2f}."
     
-    # 2. Phishing Heuristics
+    # Heuristics
     if any(k in url.lower() for k in ['login', 'verify', 'free', 'win', 'promo']): 
         phishing_score = 9
         findings["Phishing Keywords"] = "Social engineering patterns detected."
 
-    # Weighted Scoring: 40% Entropy, 60% Phishing
+    # Scoring
     total_score = int((entropy_score * 0.4) + (phishing_score * 0.6))
     status = "CRITICAL" if total_score >= 6 else "WARNING" if total_score >= 3 else "SECURE"
     recommendation = "BLOCK domain" if "CRITICAL" in status else "Proceed with caution" if "WARNING" in status else "Safe"
@@ -66,7 +66,7 @@ def generate_forensic_report(df):
     p.setFont("Helvetica-Bold", 16)
     p.drawString(50, 820, "CYBER SENTINEL | FORENSIC ANALYSIS REPORT")
     p.setFont("Helvetica", 10)
-    p.drawString(50, 800, f"Report Generated: {pd.Timestamp.now()}")
+    p.drawString(50, 800, f"Generated: {pd.Timestamp.now()}")
     p.line(50, 790, 550, 790)
     
     y = 760
@@ -94,7 +94,7 @@ with col1:
         if url_target:
             status, score, findings, recs = analyze_url_deep(url_target)
             
-            # Save to CSV
+            # Save to Logs
             new_log = pd.DataFrame([{"URL": url_target, "Status": status, "Risk": score, "Timestamp": pd.Timestamp.now()}])
             if os.path.exists(LOG_FILE):
                 new_log.to_csv(LOG_FILE, mode='a', header=False, index=False)
