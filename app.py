@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 """
 Project: CyberSentinel Neural OS - Professional Edition
 Author: Shahad Ali Al-Mastour
-Description: Enterprise-Grade Local Forensic Security Engine with Domain Intelligence
+Description: Enterprise-Grade Local Forensic Security Engine
 """
 
 # --- Page Configuration ---
@@ -35,14 +35,14 @@ def analyze_url_deep(url):
     score = 0
     findings = {}
     
-    # 1. Entropy Analysis
+    # Entropy Analysis
     probs = [c / len(url) for c in Counter(url).values()]
     entropy = -sum(p * math.log2(p) for p in probs)
     if entropy > 4.2: 
         score += 4
         findings["High Entropy"] = f"Detected randomness score of {entropy:.2f}. High complexity often masks malicious intent."
     
-    # 2. Heuristic Analysis
+    # Heuristic Analysis
     if not url.startswith("https://"): 
         score += 3
         findings["Insecure Protocol"] = "The connection is not encrypted (HTTP), exposing data to man-in-the-middle attacks."
@@ -90,8 +90,6 @@ def generate_forensic_report(data):
     buffer.seek(0)
     return buffer
 
-
-
 # --- UI Interface ---
 if 'history' not in st.session_state: st.session_state.history = []
 
@@ -103,9 +101,19 @@ with col1:
     url_target = st.text_input("Enter Target URL to Analyze:")
     if st.button("Initiate Forensic Scan"):
         if url_target:
-            status, score, findings = analyze_url_deep(url_target)
-            st.session_state.history.append({"URL": url_target, "Status": status, "Risk": score, "Details": findings})
-            st.success("Scan Completed.")
+            with st.spinner('Analyzing...'):
+                status, score, findings = analyze_url_deep(url_target)
+                st.session_state.history.append({"URL": url_target, "Status": status, "Risk": score, "Details": findings})
+                
+                # Visual Intelligence (Color Coding)
+                if "CRITICAL" in status:
+                    st.error(f"### 🚨 {status}")
+                elif "WARNING" in status:
+                    st.warning(f"### ⚠️ {status}")
+                else:
+                    st.success(f"### ✅ {status}")
+                
+                st.metric("Threat Risk Score", f"{score}/15")
         else: st.warning("Please enter a valid URL.")
 
 with col2:
