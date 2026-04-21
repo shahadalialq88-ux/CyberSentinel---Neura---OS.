@@ -20,7 +20,7 @@ st.set_page_config(page_title="CyberSentinel Pro", page_icon="🛡️", layout="
 if 'agreed' not in st.session_state: st.session_state.agreed = False
 if not st.session_state.agreed:
     st.title("🛡️ CyberSentinel | Disclaimer")
-    st.markdown("This tool is for security research. By proceeding, you accept all liability.")
+    st.markdown("### This tool is for security research. By proceeding, you accept all liability.")
     if st.button("I Accept & Proceed"):
         st.session_state.agreed = True
         st.rerun()
@@ -28,48 +28,51 @@ if not st.session_state.agreed:
 
 # --- Forensic Engine ---
 def analyze_url_deep(url):
-    # تنظيف المدخلات وضمان وجود البروتوكول
-    url = url.strip()
-    if not url.startswith(('http://', 'https://')):
-        url = 'https://' + url
+    # تحويل الرابط لحروف صغيرة تلقائياً لتجنب مشاكل الـ INVALID
+    url = url.strip().lower()
+    
+    # ضمان وجود البروتوكول للفحص
+    test_url = url
+    if not test_url.startswith(('http://', 'https://')):
+        test_url = 'https://' + test_url
     
     # التحقق من بنية الرابط (Regex)
-    if not re.match(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', url):
+    if not re.match(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-f_A-F][0-9a-f_A-F]))+', test_url):
         return "INVALID", 0, {"Syntax Error": "Invalid URL format."}, ["N/A"]
     
     score = 0
     findings = {}
     
-    # استخراج الدومين بدقة للتحليل الرياضي
-    clean_domain = url.replace('https://', '').replace('http://', '').split('/')[0].split(':')[0]
+    # استخراج الدومين للتحليل الرياضي
+    clean_domain = test_url.replace('https://', '').replace('http://', '').split('/')[0].split(':')[0]
     
     if clean_domain:
-        # حساب Shannon Entropy
+        # حساب Shannon Entropy (كاشف العشوائية)
         probs = [c / len(clean_domain) for c in Counter(clean_domain).values()]
         entropy = -sum(p * math.log2(p) for p in probs)
         
-        # حساسية الكشف (3.3 هي العتبة المثالية للروابط العشوائية)
+        # إذا كانت العشوائية عالية (مثل الروابط المشبوهة)
         if entropy > 3.3: 
             score += 8
             findings["High Entropy"] = f"Detected randomness score of {entropy:.2f} (DGA Pattern)."
 
     # تحليل البروتوكول
-    if not url.startswith("https://"): 
+    if not test_url.startswith("https://"): 
         score += 3
-        findings["Insecure Protocol"] = "Unencrypted connection detected."
+        findings["Insecure Protocol"] = "Unencrypted connection detected (HTTP)."
     
     # تحليل الأرقام المشبوهة
     if re.search(r'\d{5,}', url): 
         score += 3
-        findings["Numeric Obfuscation"] = "Suspicious numeric sequence."
+        findings["Numeric Obfuscation"] = "Suspicious numeric sequence detected."
         
     # تحليل كلمات التصيد
-    phish_keywords = ['login', 'verify', 'free', 'win', 'update', 'secure', 'account']
-    if any(k in url.lower() for k in phish_keywords): 
+    phish_keywords = ['login', 'verify', 'free', 'win', 'update', 'secure', 'account', 'bank']
+    if any(k in url for k in phish_keywords): 
         score += 5
         findings["Phishing Keywords"] = "URL contains social engineering triggers."
 
-    # تحديد الحالة النهائية بناءً على السكور
+    # تحديد الحالة النهائية
     status = "CRITICAL" if score >= 8 else "WARNING" if score >= 4 else "SECURE"
     
     recommendations = ["IMMEDIATE BLOCK: High risk of malicious activity." if "CRITICAL" in status 
@@ -117,11 +120,12 @@ with col1:
     url_input = st.text_input("Enter URL for Deep Forensic Scan:", placeholder="e.g., vbw928nzn9281bz.xyz")
     if st.button("Initiate Neural Scan 🚀"):
         if url_input:
-            with st.spinner('Analyzing...'):
+            with st.spinner('Analyzing Neural Patterns...'):
                 status, score, findings, recs = analyze_url_deep(url_input)
-                full_url = url_input if url_input.startswith(('http', 'https')) else 'https://' + url_input
-                st.session_state.history.append({"URL": full_url, "Status": status, "Risk": score, "Details": findings})
+                # تخزين النتيجة في السجل
+                st.session_state.history.append({"URL": url_input, "Status": status, "Risk": score, "Details": findings})
                 
+                # عرض النتيجة بالألوان
                 if "CRITICAL" in status: st.error(f"### 🚨 {status} THREAT")
                 elif "WARNING" in status: st.warning(f"### ⚠️ {status} ALERT")
                 else: st.success(f"### ✅ SYSTEM {status}")
@@ -132,6 +136,7 @@ with col1:
 
 with col2:
     st.info("Neural Engine: Operational")
+    st.write("This system uses Shannon Entropy to detect DGA (Domain Generation Algorithms) used by malware.")
     if st.button("🗑️ Purge Logs"):
         st.session_state.history = []
         st.rerun()
@@ -140,7 +145,7 @@ if st.session_state.history:
     st.subheader("📊 Forensic Activity Log")
     df = pd.DataFrame(st.session_state.history).drop(columns=['Details'])
     st.dataframe(df, use_container_width=True)
-    st.download_button("📥 Export PDF Report", generate_forensic_report(st.session_state.history), "Forensic_Report.pdf", "application/pdf")
+    st.download_button("📥 Export PDF Forensic Report", generate_forensic_report(st.session_state.history), "Forensic_Report_Shahad.pdf", "application/pdf")
 
 st.markdown("---")
 st.caption("©️ 2026 CyberSentinel Neural OS | Engineering Project by Shahad Ali Al-Mastour")
