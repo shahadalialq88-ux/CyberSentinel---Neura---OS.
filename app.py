@@ -28,13 +28,18 @@ if not st.session_state.agreed:
 
 # --- Forensic Engine ---
 def analyze_url_deep(url):
+    # --- تحسين مرونة المدخلات (Auto-Protocol Fix) ---
+    if not url.startswith(('http://', 'https://')):
+        url = 'https://' + url
+    
+    # التحقق من بنية الرابط (Regex)
     if not re.match(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', url):
         return "INVALID", 0, {"Syntax Error": "Invalid URL format."}, ["N/A"]
     
     score = 0
     findings = {}
     
-    # Entropy & Heuristics
+    # Entropy & Heuristics (Shannon Entropy Analysis)
     probs = [c / len(url) for c in Counter(url).values()]
     entropy = -sum(p * math.log2(p) for p in probs)
     if entropy > 4.2: 
@@ -73,14 +78,24 @@ def generate_forensic_report(data):
     y = 760
     for entry in data:
         p.setFont("Helvetica-Bold", 12)
-        p.drawString(50, y, f"Target: {urlparse(entry['URL']).netloc}")
+        # محاولة استخراج الدومين للتقرير الجمالي
+        try:
+            domain_display = urlparse(entry['URL']).netloc or entry['URL']
+        except:
+            domain_display = entry['URL']
+            
+        p.drawString(50, y, f"Target: {domain_display}")
         p.setFont("Helvetica", 11)
         p.drawString(50, y-15, f"Risk Score: {entry['Risk']} | Status: {entry['Status']}")
-        y -= 30
+        y -= 35
         for title, desc in entry['Details'].items():
             p.drawString(70, y, f"- {title}: {desc}")
             y -= 15
-        y -= 10
+        y -= 15
+        if y < 100: # إضافة صفحة جديدة إذا انتهت المساحة
+            p.showPage()
+            y = 800
+            
     p.save()
     buffer.seek(0)
     return buffer
@@ -93,29 +108,46 @@ st.title("🌐 CyberSentinel | Ultimate Forensic OS")
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    url_target = st.text_input("Enter URL to Analyze:")
+    url_target = st.text_input("Enter URL to Analyze:", placeholder="example.com")
     if st.button("Initiate Forensic Scan"):
         if url_target:
-            with st.spinner('Analyzing...'):
-                status, score, findings, recs = analyze_url_deep(url_target)
-                st.session_state.history.append({"URL": url_target, "Status": status, "Risk": score, "Details": findings})
+            with st.spinner('Performing Deep Analysis...'):
+                # معالجة الرابط محلياً قبل الإرسال لضمان العرض الصحيح في الـ UI
+                processed_url = url_target if url_target.startswith(('http://', 'https://')) else 'https://' + url_target
                 
-                if "CRITICAL" in status: st.error(f"### 🚨 {status}"); st.warning(f"Action: {recs[0]}")
-                elif "WARNING" in status: st.warning(f"### ⚠️ {status}"); st.info(f"Action: {recs[0]}")
-                else: st.success(f"### ✅ {status}"); st.success(f"Action: {recs[0]}")
+                status, score, findings, recs = analyze_url_deep(url_target)
+                st.session_state.history.append({"URL": processed_url, "Status": status, "Risk": score, "Details": findings})
+                
+                if "CRITICAL" in status: 
+                    st.error(f"### 🚨 {status}")
+                    st.warning(f"*Action:* {recs[0]}")
+                elif "WARNING" in status: 
+                    st.warning(f"### ⚠️ {status}")
+                    st.info(f"*Action:* {recs[0]}")
+                else: 
+                    st.success(f"### ✅ {status}")
+                    st.success(f"*Action:* {recs[0]}")
                 
                 st.metric("Threat Risk Score", f"{score}/15")
-        else: st.warning("Please enter a valid URL.")
+        else: 
+            st.warning("Please enter a URL to start scanning.")
 
 with col2:
-    if st.button("🗑️ Clear System  History"):
+    if st.button("🗑️ Clear System History"):
         st.session_state.history = []
         st.rerun()
 
 if st.session_state.history:
     st.subheader("Deep Log Analysis")
-    st.dataframe(pd.DataFrame(st.session_state.history).drop(columns=['Details']), use_container_width=True)
-    st.download_button("📥 Export Forensic Report", generate_forensic_report(st.session_state.history), "Detailed_Forensic_Report.pdf", "application/pdf")
+    # تحويل التاريخ لـ DataFrame للعرض
+    df_history = pd.DataFrame(st.session_state.history).drop(columns=['Details'])
+    st.dataframe(df_history, use_container_width=True)
+    st.download_button(
+        label="📥 Export Forensic Report (PDF)",
+        data=generate_forensic_report(st.session_state.history),
+        file_name=f"CyberSentinel_Report_{pd.Timestamp.now().strftime('%Y%m%d_%H%M')}.pdf",
+        mime="application/pdf"
+    )
 
 st.markdown("---")
-st.caption("©️ 2026 CyberSentinel Neural OS | Shahad Ali Al-Mastour")
+st.caption("©️ 2026 CyberSentinel Neural OS | Developed by Shahad Ali Al-Mastour")
