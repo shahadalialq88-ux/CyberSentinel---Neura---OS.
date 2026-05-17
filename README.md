@@ -46,7 +46,7 @@ Experience the live forensic engine here:
    
    
 ## ⚖️ License & Disclaimer
- * *License:* MIT License.
+ * *License:* MIT License..
  * *Disclaimer:* This tool is provided for educational and security research purposes only. The developer assumes no responsibility for misuse or infrastructure impact.
 ## 🤝 Connect & Collaborate
 I am always excited to connect with fellow researchers, developers, and security enthusiasts.
